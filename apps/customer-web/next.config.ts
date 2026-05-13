@@ -1,28 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: [
-    "@zalldi/ui",
-    "@zalldi/auth",
-    "@zalldi/database",
-    "@zalldi/config",
-    "@zalldi/types",
-    "@zalldi/validation",
-    "@zalldi/storage",
-  ],
+  transpilePackages: ["@zalldi/ui", "@zalldi/auth", "@zalldi/database", "@zalldi/config", "@zalldi/types", "@zalldi/validation"],
   images: {
     remotePatterns: [
-      // Supabase Storage URLs
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-      // Any supabase project
-      {
-        protocol: "https",
-        hostname: "**.supabase.co",
-      },
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "*.cloudflare.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
   experimental: {

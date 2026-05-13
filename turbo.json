@@ -5,7 +5,19 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "NEXT_PUBLIC_APP_NAME",
+        "NEXT_PUBLIC_APP_ENV",
+        "NEXT_PUBLIC_CUSTOMER_WEB_URL",
+        "NEXT_PUBLIC_ADMIN_URL",
+        "NEXT_PUBLIC_SELLER_URL",
+        "NEXT_PUBLIC_DSTORE_URL",
+        "NODE_ENV"
+      ]
     },
     "dev": {
       "cache": false,

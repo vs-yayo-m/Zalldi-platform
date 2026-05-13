@@ -1,4 +1,3 @@
-// /apps/customer-web/components/auth/RegisterForm.tsx
 "use client";
 
 import { useState } from "react";

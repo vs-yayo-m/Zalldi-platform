@@ -1,4 +1,3 @@
-// /packages/database/src/queries/products.ts
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Product, PaginatedResponse } from "@zalldi/types";
 
@@ -91,13 +90,10 @@ export async function getLowStockProducts(
     .from("products")
     .select("*")
     .eq("darkstore_id", darkstore_id)
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .filter("stock_quantity", "lte", supabase.raw("low_stock_threshold"))
+    .order("stock_quantity", { ascending: true });
 
   if (error) throw new Error(error.message);
-
-  const filtered = (data ?? []).filter(
-    (p) => p.stock_quantity <= p.low_stock_threshold
-  );
-
-  return filtered;
+  return (data ?? []) as Product[];
 }
