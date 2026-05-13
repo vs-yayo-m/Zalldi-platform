@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@zalldi/auth/server";
 
+
 export async function GET() {
   const status: Record<string, string> = {
     app: "customer-web",
