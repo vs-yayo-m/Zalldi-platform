@@ -1,16 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
-export async function createClient() {
-  const cookieStore = await cookies();
-  
+export async function createClient(cookieStore: any) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!url || !key) {
-    throw new Error(
-      "Missing Supabase environment variables. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    );
+    throw new Error("Missing Supabase environment variables.");
   }
   
   return createServerClient(url, key, {
@@ -18,34 +13,15 @@ export async function createClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet: { name: string;value: string;options ? : Record < string, unknown > } []) {
+      setAll(cookiesToSet: any[]) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options as Parameters < typeof cookieStore.set > [2]);
+            cookieStore.set(name, value, options);
           });
         } catch {
-          // setAll called from a Server Component — ignore
+          // ignore in Server Components
         }
       },
-    },
-  });
-}
-
-export function createAdminClient() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createClient: createSupabase } = require("@supabase/supabase-js");
-  
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!url || !serviceKey) {
-    throw new Error("Missing Supabase service role key for admin operations.");
-  }
-  
-  return createSupabase(url, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
     },
   });
 }
