@@ -17,7 +17,13 @@ export async function updateSession(
       getAll() {
         return (request as any).cookies?.getAll?.() ?? [];
       },
-      setAll(cookiesToSet) {
+      setAll(
+  cookiesToSet: Array<{
+    name: string;
+    value: string;
+    options?: Record<string, unknown>;
+  }>
+) {
         const reqCookies = (request as any).cookies;
         cookiesToSet.forEach(({ name, value }) => {
           reqCookies?.set?.(name, value);
