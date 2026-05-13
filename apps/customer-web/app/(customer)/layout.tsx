@@ -9,7 +9,7 @@ export default function CustomerLayout({
 }) {
   return (
     <>
-      <Navbar />
+      <Navbar user={null} />
       <main className="min-h-screen bg-gray-50">{children}</main>
       <Footer />
       <CartDrawer />
