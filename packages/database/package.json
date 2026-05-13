@@ -9,13 +9,12 @@
     "./queries/*": "./src/queries/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "gen:types": "supabase gen types typescript --linked > src/types/supabase.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.43.0",
-    "@zalldi/types": "workspace:*"
+    "@zalldi/types": "*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
