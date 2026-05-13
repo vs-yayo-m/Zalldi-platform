@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@zalldi/darkstore-manager",
-  "installCommand": "cd ../.. && npm install -g pnpm@9.1.0 && pnpm install",
+  "installCommand": "cd ../.. && pnpm install",
   "framework": "nextjs",
   "outputDirectory": ".next"
 }
