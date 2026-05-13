@@ -1,3 +1,4 @@
+// /packages/auth/src/client.ts
 import { createBrowserClient } from "@supabase/ssr";
 
 // ============================================================
