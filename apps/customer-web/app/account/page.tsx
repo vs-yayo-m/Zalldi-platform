@@ -1,10 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-
 import { createClient } from "@zalldi/auth/server";
 import { getUserProfile, getFoodOrders, getGroceryOrders } from "@zalldi/database";
-
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AccountDashboard from "@/components/account/AccountDashboard";
@@ -12,40 +9,17 @@ import AccountDashboard from "@/components/account/AccountDashboard";
 export const metadata: Metadata = { title: "My Account" };
 
 export default async function AccountPage() {
-  const cookieStore = cookies();
-  
-  const supabase = await createClient(cookieStore);
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   if (!user) redirect("/login?redirect=/account");
-  
+
   const [profile, recentFoodOrders, recentGroceryOrders] = await Promise.all([
     getUserProfile(supabase, user.id),
-    getFoodOrders(supabase, {
-      customer_id: user.id,
-      limit: 5,
-    }).catch(() => ({
-      data: [],
-      count: 0,
-      page: 1,
-      limit: 5,
-      has_more: false,
-    })),
-    getGroceryOrders(supabase, {
-      customer_id: user.id,
-      limit: 5,
-    }).catch(() => ({
-      data: [],
-      count: 0,
-      page: 1,
-      limit: 5,
-      has_more: false,
-    })),
+    getFoodOrders(supabase, { customer_id: user.id, limit: 5 }).catch(() => ({ data: [], count: 0, page: 1, limit: 5, has_more: false })),
+    getGroceryOrders(supabase, { customer_id: user.id, limit: 5 }).catch(() => ({ data: [], count: 0, page: 1, limit: 5, has_more: false })),
   ]);
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar user={user} />
