@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@zalldi/customer-web",
-  "installCommand": "cd ../.. && pnpm install",
+  "installCommand": "cd ../.. && npm install -g pnpm@9.1.0 && pnpm install",
   "framework": "nextjs",
   "outputDirectory": ".next"
 }
