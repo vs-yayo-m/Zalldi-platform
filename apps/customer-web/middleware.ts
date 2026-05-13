@@ -8,7 +8,12 @@ const PROTECTED_ROUTES = [
   "/account/addresses",
   "/food/checkout",
   "/groceries/checkout",
+  "/cart",
+  "/checkout",
+  "/orders",
+  "/account",
 ];
+const AUTH_ROUTES = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
