@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@zalldi/auth/middleware";
 
+// Protected routes that require authentication
 const PROTECTED_ROUTES = [
   "/account",
   "/account/orders",
@@ -10,25 +11,25 @@ const PROTECTED_ROUTES = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  
-  const { user } = await updateSession(request);
-  
-  const isProtected = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-  
+  const { pathname } = request.nextUrl;
+
+  // Update Supabase session (refresh tokens)
+  const { response, user } = await updateSession(request as unknown as Request);
+
+  // Guard protected routes
+  const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
   if (isProtected && !user) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
-  
+
+  // Redirect authenticated users away from auth pages
   if (user && (pathname === "/login" || pathname === "/register")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  
-  return NextResponse.next();
+
+  return response;
 }
 
 export const config = {
