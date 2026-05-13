@@ -91,7 +91,7 @@ export async function getLowStockProducts(
     .select("*")
     .eq("darkstore_id", darkstore_id)
     .eq("is_active", true)
-    .filter("stock_quantity", "lte", supabase.raw("low_stock_threshold"))
+    .filter("stock_quantity", "lte", "low_stock_threshold")
     .order("stock_quantity", { ascending: true });
 
   if (error) throw new Error(error.message);
