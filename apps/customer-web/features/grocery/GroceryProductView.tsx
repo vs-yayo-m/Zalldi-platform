@@ -6,3 +6,4 @@ export default function GroceryProductView({ id }: { id: string }) {
     </div>
   );
 }
+
