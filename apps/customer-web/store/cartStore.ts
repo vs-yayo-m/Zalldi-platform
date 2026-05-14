@@ -1,134 +1,105 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { FoodCartItem, GroceryCartItem } from "@zalldi/types";
+// apps/customer-web/store/cartStore.ts
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+// Local types — moves to @zalldi/types in Section 6
+interface GroceryCartItem {
+  product_id: string
+  name: string
+  price: number
+  mrp: number
+  image_url: string | null
+  quantity: number
+  stock_quantity: number
+}
+
+interface FoodCartItem {
+  item_id: string
+  name: string
+  price: number
+  quantity: number
+  restaurant_id: string
+}
 
 interface CartStore {
-  // Food cart
-  foodItems: FoodCartItem[];
-  foodRestaurantId: string | null;
-  addFoodItem: (item: FoodCartItem, restaurantId: string) => "added" | "conflict";
-  removeFoodItem: (menu_item_id: string) => void;
-  updateFoodItemQty: (menu_item_id: string, qty: number) => void;
-  clearFoodCart: () => void;
-
-  // Grocery cart
-  groceryItems: GroceryCartItem[];
-  groceryDarkstoreId: string | null;
-  addGroceryItem: (item: GroceryCartItem, darkstoreId: string) => void;
-  removeGroceryItem: (product_id: string) => void;
-  updateGroceryItemQty: (product_id: string, qty: number) => void;
-  clearGroceryCart: () => void;
-
-  // Computed
-  foodTotal: () => number;
-  groceryTotal: () => number;
+  foodItems: FoodCartItem[]
+  groceryItems: GroceryCartItem[]
+  darkstoreId: string | null
+  restaurantId: string | null
+  addGroceryItem: (item: GroceryCartItem, darkstoreId: string) => void
+  updateGroceryItemQty: (productId: string, qty: number) => void
+  clearGroceryCart: () => void
+  addFoodItem: (item: FoodCartItem) => void
+  updateFoodItemQty: (itemId: string, qty: number) => void
+  clearFoodCart: () => void
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
-    (set, get) => ({
-      // ---- Food Cart ----
-      foodItems: [],
-      foodRestaurantId: null,
-
-      addFoodItem: (item, restaurantId) => {
-        const { foodRestaurantId, foodItems } = get();
-
-        // Different restaurant — signal conflict
-        if (foodRestaurantId && foodRestaurantId !== restaurantId) {
-          return "conflict";
-        }
-
-        const existing = foodItems.find((i) => i.menu_item_id === item.menu_item_id);
-        if (existing) {
-          set({
-            foodItems: foodItems.map((i) =>
-              i.menu_item_id === item.menu_item_id
-                ? { ...i, quantity: i.quantity + item.quantity, item_total: (i.quantity + item.quantity) * i.price }
-                : i
-            ),
-          });
-        } else {
-          set({
-            foodItems: [...foodItems, item],
-            foodRestaurantId: restaurantId,
-          });
-        }
-        return "added";
-      },
-
-      removeFoodItem: (menu_item_id) =>
-        set((s) => ({
-          foodItems: s.foodItems.filter((i) => i.menu_item_id !== menu_item_id),
-          foodRestaurantId: s.foodItems.length <= 1 ? null : s.foodRestaurantId,
-        })),
-
-      updateFoodItemQty: (menu_item_id, qty) =>
-        set((s) => ({
-          foodItems:
-            qty <= 0
-              ? s.foodItems.filter((i) => i.menu_item_id !== menu_item_id)
-              : s.foodItems.map((i) =>
-                  i.menu_item_id === menu_item_id
-                    ? { ...i, quantity: qty, item_total: qty * i.price }
-                    : i
-                ),
-        })),
-
-      clearFoodCart: () => set({ foodItems: [], foodRestaurantId: null }),
-
-      // ---- Grocery Cart ----
+    (set) => ({
+      foodItems:    [],
       groceryItems: [],
-      groceryDarkstoreId: null,
+      darkstoreId:  null,
+      restaurantId: null,
 
-      addGroceryItem: (item, darkstoreId) => {
-        const { groceryItems } = get();
-        const existing = groceryItems.find((i) => i.product_id === item.product_id);
-        if (existing) {
-          const newQty = Math.min(existing.quantity + 1, existing.stock_quantity);
-          set({
-            groceryItems: groceryItems.map((i) =>
-              i.product_id === item.product_id ? { ...i, quantity: newQty } : i
-            ),
-          });
-        } else {
-          set({ groceryItems: [...groceryItems, item], groceryDarkstoreId: darkstoreId });
-        }
-      },
+      addGroceryItem: (item, darkstoreId) =>
+        set((state) => {
+          const existing = state.groceryItems.find(i => i.product_id === item.product_id)
+          if (existing) {
+            return {
+              groceryItems: state.groceryItems.map(i =>
+                i.product_id === item.product_id
+                  ? { ...i, quantity: i.quantity + 1 }
+                  : i
+              ),
+            }
+          }
+          return {
+            groceryItems: [...state.groceryItems, item],
+            darkstoreId,
+          }
+        }),
 
-      removeGroceryItem: (product_id) =>
-        set((s) => ({
-          groceryItems: s.groceryItems.filter((i) => i.product_id !== product_id),
-          groceryDarkstoreId: s.groceryItems.length <= 1 ? null : s.groceryDarkstoreId,
+      updateGroceryItemQty: (productId, qty) =>
+        set((state) => ({
+          groceryItems: qty <= 0
+            ? state.groceryItems.filter(i => i.product_id !== productId)
+            : state.groceryItems.map(i =>
+                i.product_id === productId ? { ...i, quantity: qty } : i
+              ),
         })),
 
-      updateGroceryItemQty: (product_id, qty) =>
-        set((s) => ({
-          groceryItems:
-            qty <= 0
-              ? s.groceryItems.filter((i) => i.product_id !== product_id)
-              : s.groceryItems.map((i) =>
-                  i.product_id === product_id ? { ...i, quantity: Math.min(qty, i.stock_quantity) } : i
-                ),
+      clearGroceryCart: () => set({ groceryItems: [], darkstoreId: null }),
+
+      addFoodItem: (item) =>
+        set((state) => {
+          const existing = state.foodItems.find(i => i.item_id === item.item_id)
+          if (existing) {
+            return {
+              foodItems: state.foodItems.map(i =>
+                i.item_id === item.item_id
+                  ? { ...i, quantity: i.quantity + 1 }
+                  : i
+              ),
+            }
+          }
+          return {
+            foodItems: [...state.foodItems, item],
+            restaurantId: item.restaurant_id,
+          }
+        }),
+
+      updateFoodItemQty: (itemId, qty) =>
+        set((state) => ({
+          foodItems: qty <= 0
+            ? state.foodItems.filter(i => i.item_id !== itemId)
+            : state.foodItems.map(i =>
+                i.item_id === itemId ? { ...i, quantity: qty } : i
+              ),
         })),
 
-      clearGroceryCart: () => set({ groceryItems: [], groceryDarkstoreId: null }),
-
-      // ---- Computed ----
-      foodTotal: () =>
-        get().foodItems.reduce((sum, i) => sum + i.item_total, 0),
-
-      groceryTotal: () =>
-        get().groceryItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      clearFoodCart: () => set({ foodItems: [], restaurantId: null }),
     }),
-    {
-      name: "zalldi-cart",
-      partialize: (s) => ({
-        foodItems: s.foodItems,
-        foodRestaurantId: s.foodRestaurantId,
-        groceryItems: s.groceryItems,
-        groceryDarkstoreId: s.groceryDarkstoreId,
-      }),
-    }
+    { name: 'zalldi-cart' }
   )
-);
+)
