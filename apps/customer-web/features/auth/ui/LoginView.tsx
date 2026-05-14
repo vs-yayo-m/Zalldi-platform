@@ -13,9 +13,10 @@ import { AuthDivider }         from './components/AuthDivider'
 import { AuthIllustration }    from './components/AuthIllustration'
 import { AuthFormField }       from './components/AuthFormField'
 import type { AuthMode, LoginFormData, LoginFormErrors } from '../types/auth.types'
-import { validateEmail }       from '@zalldi/utils'
+// REPLACE with local imports
+import { validateEmail } from '@/utils/validators'
+import { debounce }      from '@/utils/helpers'
 import { APP_NAME }            from '@/utils/constants'
-import { debounce }            from '@zalldi/utils'
 import toast                   from 'react-hot-toast'
 
 export default function LoginView() {
