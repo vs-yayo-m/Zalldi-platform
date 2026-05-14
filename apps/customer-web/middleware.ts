@@ -13,35 +13,55 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookies) => {
-          cookies.forEach(({ name, value, options }) => {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: { name: string;value: string;options ? : Record < string, unknown > } []) {
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
-          })
+          )
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options as Parameters < typeof response.cookies.set > [2])
+          )
         },
       },
     }
   )
   
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // Block non-customers — no other roles allowed in customer-web
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile && profile.role !== 'customer') {
+      return NextResponse.redirect(new URL('/login?error=wrong_portal', request.url))
+    }
+  }
   
   const isProtected = PROTECTED.some(p => pathname.startsWith(p))
   const isAuthRoute = AUTH_ONLY.some(p => pathname.startsWith(p))
   
-  // 1. protect routes
   if (isProtected && !user) {
     return NextResponse.redirect(
       new URL(`/login?redirect=${pathname}`, request.url)
     )
   }
   
-  // 2. prevent auth page access when logged in
   if (isAuthRoute && user) {
     return NextResponse.redirect(new URL('/home', request.url))
   }
   
   return response
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
