@@ -14,7 +14,7 @@ import { AuthIllustration }    from './components/AuthIllustration'
 import { AuthFormField }       from './components/AuthFormField'
 import type { AuthMode, LoginFormData, LoginFormErrors } from '../types/auth.types'
 import { validateEmail }       from '@zalldi/utils'
-import { APP_NAME }            from '@/utils/constants'
+import { APP_NAME }            from '../../../utils/constants'
 import { debounce }            from '@zalldi/utils'
 import toast                   from 'react-hot-toast'
 
