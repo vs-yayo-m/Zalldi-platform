@@ -1,44 +1,47 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { updateSession } from "@zalldi/auth/middleware";
+import { type NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
-// Protected routes that require authentication
-const PROTECTED_ROUTES = [
-  "/account",
-  "/account/orders",
-  "/account/addresses",
-  "/food/checkout",
-  "/groceries/checkout",
-  "/cart",
-  "/checkout",
-  "/orders",
-  "/account",
-];
-const AUTH_ROUTES = ["/login", "/register"];
+const PROTECTED = ['/cart', '/checkout', '/orders', '/account']
+const AUTH_ONLY = ['/login', '/forgot-password', '/reset-password']
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Update Supabase session (refresh tokens)
-  const { response, user } = await updateSession(request as unknown as Request);
-
-  // Guard protected routes
-  const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const { pathname } = request.nextUrl
+  let response = NextResponse.next({ request })
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookies) => {
+          cookies.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  
+  const isProtected = PROTECTED.some(p => pathname.startsWith(p))
+  const isAuthRoute = AUTH_ONLY.some(p => pathname.startsWith(p))
+  
+  // 1. protect routes
   if (isProtected && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(
+      new URL(`/login?redirect=${pathname}`, request.url)
+    )
   }
-
-  // Redirect authenticated users away from auth pages
-  if (user && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/", request.url));
+  
+  // 2. prevent auth page access when logged in
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL('/home', request.url))
   }
-
-  return response;
+  
+  return response
 }
-
-export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
-};
