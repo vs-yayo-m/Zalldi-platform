@@ -1,6 +1,6 @@
 'use client'
 import { createBrowserSupabaseClient } from '@zalldi/supabase'
-import { mapAuthError }                from '../utils/authErrors'
+import { mapAuthError } from '@zalldi/utils'
 import type { UserProfile }            from '@zalldi/types'
 
 // ─── Internal ─────────────────────────────────────────────────────────────────
