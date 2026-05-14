@@ -1,7 +1,5 @@
-export { default as LoginView } from "./LoginView";
-export { default as RegisterView } from "./RegisterView";
-export { default as VerifyEmailView } from "./VerifyEmailView";
 
+export { default as RegisterView } from "./RegisterView";
 
 // Everything outside this feature imports ONLY from here
 // Never import directly from internal files
