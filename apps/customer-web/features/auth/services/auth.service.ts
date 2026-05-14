@@ -1,5 +1,5 @@
 'use client'
-import { createBrowserSupabaseClient } from '@zalldi/supabase'
+import { createBrowserSupabaseClient } from '@/services/supabase/client.browser'
 import { mapAuthError } from '@zalldi/utils'
 import type { UserProfile }            from '@zalldi/types'
 

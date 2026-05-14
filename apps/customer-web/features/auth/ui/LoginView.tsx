@@ -13,10 +13,24 @@ import { AuthDivider }         from './components/AuthDivider'
 import { AuthIllustration }    from './components/AuthIllustration'
 import { AuthFormField }       from './components/AuthFormField'
 import type { AuthMode, LoginFormData, LoginFormErrors } from '../types/auth.types'
-import { validateEmail }       from '@zalldi/utils'
-import { APP_NAME }            from '@/utils/constants'
-import { debounce }            from '@zalldi/utils'
+import { APP_NAME }            from '../../../utils/constants'
 import toast                   from 'react-hot-toast'
+
+
+function validateEmail(email: string): string | null {
+  const value = email.trim()
+  if (!value) return 'Email is required'
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  return isValid ? null : 'Enter a valid email address'
+}
+
+function debounce<T extends (...args: any[]) => void>(fn: T, waitMs: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), waitMs)
+  }
+}
 
 export default function LoginView() {
   const { login, register, loginWithGoogle } = useAuth()

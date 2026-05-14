@@ -2,7 +2,7 @@
 import React, {
   createContext, useState, useEffect, useCallback,
 } from 'react'
-import { createBrowserSupabaseClient } from '@zalldi/supabase'
+import { createBrowserSupabaseClient } from '@/services/supabase/client.browser'
 import authService                     from '../services/auth.service'
 import type { AuthContextValue, UserProfile } from '@zalldi/types'
 
