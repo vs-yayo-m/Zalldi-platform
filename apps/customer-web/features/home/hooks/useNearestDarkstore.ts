@@ -1,19 +1,34 @@
 'use client'
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { getBrowserLocation } from '@/services/location.service'
 import { resolveDarkstore } from '@/app/actions/location.action'
 import { useLocationStore } from '@/store/locationStore'
 
-type Status = 'idle' | 'requesting' | 'resolving' | 'success' | 'no_coverage' | 'denied' | 'error'
+type Status = |
+  'idle' |
+  'requesting' |
+  'resolving' |
+  'success' |
+  'no_coverage' |
+  'denied' |
+  'error'
 
 export function useNearestDarkstore() {
+  const router = useRouter()
+  
   const [status, setStatus] = useState < Status > ('idle')
-  const { setLocation, setDenied, lat, locationGranted } = useLocationStore()
+  
+  const {
+    setLocation,
+    setDenied,
+    lat,
+    locationGranted,
+  } = useLocationStore()
   
   const requestLocation = useCallback(async () => {
     setStatus('requesting')
     
-    // Get browser GPS
     const { coords, error: gpsError } = await getBrowserLocation()
     
     if (gpsError === 'permission_denied') {
@@ -29,8 +44,10 @@ export function useNearestDarkstore() {
     
     setStatus('resolving')
     
-    // Server Action — finds nearest darkstore via PostGIS
-    const { darkstore, error } = await resolveDarkstore(coords.lat, coords.lng)
+    const { darkstore, error } = await resolveDarkstore(
+      coords.lat,
+      coords.lng
+    )
     
     if (error === 'no_darkstore') {
       setStatus('no_coverage')
@@ -42,8 +59,6 @@ export function useNearestDarkstore() {
       return
     }
     
-    // Build a simple address label from coordinates
-    // In Section 10 we replace with full reverse geocoding
     const label = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`
     
     setLocation({
@@ -57,7 +72,10 @@ export function useNearestDarkstore() {
     })
     
     setStatus('success')
-  }, [setLocation, setDenied])
+    
+    // CRITICAL
+    router.refresh()
+  }, [router, setLocation, setDenied])
   
   return {
     status,
