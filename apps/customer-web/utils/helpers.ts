@@ -1,4 +1,5 @@
-export function debounce < T extends(...args: unknown[]) => void > (
+// apps/customer-web/utils/helpers.ts
+export function debounce < T extends(...args: never[]) => void > (
   fn: T,
   delay: number
 ): (...args: Parameters < T > ) => void {
