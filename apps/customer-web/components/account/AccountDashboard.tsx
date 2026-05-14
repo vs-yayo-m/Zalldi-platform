@@ -35,7 +35,7 @@ function OrderRow({ id, total, status, createdAt, type }: {
 }
 
 export default function AccountDashboard({ user, profile, recentFoodOrders, recentGroceryOrders }: Props) {
-  const name = profile?.display_name ?? user.email?.split("@")[0] ?? "User";
+  const name = profile?.full_name ?? user.email?.split("@")[0] ?? "User";
   const allOrders = [
     ...recentFoodOrders.map((o) => ({ ...o, type: "food" as const })),
     ...recentGroceryOrders.map((o) => ({ ...o, type: "grocery" as const })),
@@ -49,7 +49,7 @@ export default function AccountDashboard({ user, profile, recentFoodOrders, rece
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-900">{name}</h1>
           <p className="text-sm text-gray-500">{user.email}</p>
-          {profile?.phone_number && <p className="text-sm text-gray-500">{profile.phone_number}</p>}
+          {profile?.phone && <p className="text-sm text-gray-500">{profile.phone}</p>}
         </div>
         <Link href="/account/profile" className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
           Edit Profile

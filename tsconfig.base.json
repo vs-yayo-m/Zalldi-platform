@@ -18,10 +18,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "skipLibCheck": true,
-    "paths": {
-      "@zalldi/*": ["../../packages/*/src"]
-    }
+    "skipLibCheck": true
   },
   "exclude": ["node_modules"]
 }
