@@ -59,7 +59,7 @@ export function useNearestDarkstore() {
       return
     }
     
-    const label = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`
+     const label = darkstore.name
     
     setLocation({
       lat: coords.lat,
