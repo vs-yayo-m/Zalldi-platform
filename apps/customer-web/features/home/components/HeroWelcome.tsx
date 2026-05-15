@@ -74,7 +74,7 @@ export function HeroWelcome() {
     return () => clearInterval(t)
   }, [])
 
-  const slide = SLIDES[idx]
+const slide = SLIDES[idx] ?? SLIDES[0]!
 
   return (
     <div style={{
