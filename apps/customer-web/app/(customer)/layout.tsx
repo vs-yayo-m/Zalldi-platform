@@ -1,18 +1,12 @@
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import CartDrawer from "@/features/cart/CartDrawer";
-
+// apps/customer-web/app/(customer)/layout.tsx
 export default function CustomerLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <>
-      <Navbar user={null} />
-      <main className="min-h-screen bg-gray-50">{children}</main>
-      <Footer />
-      <CartDrawer />
-    </>
-  );
+    <main className="min-h-screen">
+      {children}
+    </main>
+  )
 }

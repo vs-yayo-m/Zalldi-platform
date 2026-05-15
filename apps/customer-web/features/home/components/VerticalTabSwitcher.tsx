@@ -5,11 +5,7 @@ import type { DarkstoreHomeData } from '@/services/darkstore.service'
 import { GroceryHome } from './GroceryHome'
 import { FoodComingSoon } from './FoodComingSoon'
 
-type Tab = 'groceries' | 'food' | 'dineout'
-
-interface Props {
-  groceryData: DarkstoreHomeData
-}
+type Tab = 'food' | 'groceries' | 'dineout'
 
 const TABS: { id: Tab;label: string;emoji: string;available: boolean } [] = [
   { id: 'food', label: 'Food', emoji: '🍔', available: false },
@@ -17,62 +13,94 @@ const TABS: { id: Tab;label: string;emoji: string;available: boolean } [] = [
   { id: 'dineout', label: 'Dine Out', emoji: '🍽️', available: false },
 ]
 
+interface Props {
+  groceryData: DarkstoreHomeData
+}
+
 export function VerticalTabSwitcher({ groceryData }: Props) {
   const [active, setActive] = useState < Tab > ('groceries')
   
   return (
-    <div className="bg-neutral-900">
-      {/* Tab row */}
-      <div className="flex border-b border-white/10">
-        {TABS.map((tab) => (
+    <div>
+      {/* Tab row — dark background matching header */}
+      <div style={{
+        background: '#2d1500',
+        display: 'flex',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
-            className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-colors"
+            style={{
+              flex: 1, position: 'relative',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: 4,
+              padding: '10px 8px 8px',
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
           >
-            {/* Active indicator */}
+            {/* Active background */}
             {active === tab.id && (
               <motion.div
-                layoutId="tab-indicator"
-                className="absolute inset-0 bg-white/8 rounded-t-xl"
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                layoutId="tab-bg"
+                style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(255,255,255,0.07)',
+                  borderRadius: '12px 12px 0 0',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               />
             )}
 
-            <span className="text-2xl relative z-10">{tab.emoji}</span>
-            <span
-              className={`text-xs font-bold relative z-10 transition-colors ${
-                active === tab.id
-                  ? 'text-white'
-                  : 'text-white/40'
-              }`}
-            >
+            <span style={{ fontSize: 24, position: 'relative', zIndex: 1 }}>
+              {tab.emoji}
+            </span>
+
+            <span style={{
+              fontSize: 11, fontWeight: 700,
+              color: active === tab.id ? '#fff' : 'rgba(255,255,255,0.40)',
+              position: 'relative', zIndex: 1,
+              transition: 'color 0.2s',
+            }}>
               {tab.label}
             </span>
+
+            {/* Coming soon badge */}
+            {!tab.available && (
+              <span style={{
+                position: 'absolute', top: 6, right: 8,
+                fontSize: 7, fontWeight: 900,
+                color: '#f97316',
+                background: 'rgba(249,115,22,0.15)',
+                padding: '1px 4px', borderRadius: 99,
+                border: '1px solid rgba(249,115,22,0.3)',
+                zIndex: 2,
+              }}>
+                SOON
+              </span>
+            )}
 
             {/* Active underline */}
             {active === tab.id && (
               <motion.div
-                layoutId="tab-underline"
-                className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 rounded-full"
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                layoutId="tab-line"
+                style={{
+                  position: 'absolute', bottom: 0,
+                  left: '20%', right: '20%',
+                  height: 2, background: '#f97316', borderRadius: 99,
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               />
-            )}
-
-            {/* Coming soon badge */}
-            {!tab.available && (
-              <span className="absolute top-2 right-2 text-[8px] font-black text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded-full">
-                SOON
-              </span>
             )}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="bg-gray-50 min-h-screen">
+      <div style={{ background: '#f9fafb', minHeight: '60vh' }}>
         {active === 'groceries' && <GroceryHome data={groceryData} />}
-        {active === 'food'      && <FoodComingSoon />}
+        {active === 'food'      && <FoodComingSoon label="Food Delivery" />}
         {active === 'dineout'   && <FoodComingSoon label="Dine Out" />}
       </div>
     </div>

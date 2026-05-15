@@ -1,92 +1,138 @@
 'use client'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { MapPin, Navigation, AlertCircle } from 'lucide-react'
 import { useNearestDarkstore } from '../hooks/useNearestDarkstore'
 
 export function LocationGate({ children }: { children: React.ReactNode }) {
   const { status, requestLocation, hasLocation } = useNearestDarkstore()
+  const router = useRouter()
   
-  // Already has location — show content
+  // After location granted → refresh Server Component to pick up cookie
+  useEffect(() => {
+    if (status === 'success') {
+      router.refresh()
+    }
+  }, [status, router])
+  
   if (hasLocation) return <>{children}</>
   
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-6">
+    <div style={{
+      minHeight: '50vh', display: 'flex',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '0 24px', background: '#fff7ed',
+    }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm text-center"
+        style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}
       >
-        {/* Icon */}
-        <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <MapPin className="w-10 h-10 text-orange-500" />
+        <div style={{
+          width: 72, height: 72,
+          background: '#fff7ed', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 20px',
+          border: '2px solid rgba(249,115,22,0.2)',
+        }}>
+          <MapPin size={36} color="#f97316" />
         </div>
 
         {status === 'no_coverage' ? (
           <>
-            <h2 className="text-xl font-black text-neutral-900 mb-2">
-              Not available in your area yet
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1f2937', marginBottom: 8 }}>
+              Not in your area yet
             </h2>
-            <p className="text-neutral-500 text-sm mb-6">
-              Zalldi is expanding fast. We'll notify you when we reach you.
+            <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 16 }}>
+              Zalldi is expanding fast. We'll be there soon!
             </p>
-            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-xl p-3">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm font-medium">No darkstore in your area</span>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              color: '#d97706', background: '#fffbeb',
+              borderRadius: 12, padding: '12px 16px',
+              border: '1px solid #fde68a',
+            }}>
+              <AlertCircle size={16} />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>No darkstore in your area</span>
             </div>
           </>
         ) : status === 'denied' ? (
           <>
-            <h2 className="text-xl font-black text-neutral-900 mb-2">
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1f2937', marginBottom: 8 }}>
               Location access denied
             </h2>
-            <p className="text-neutral-500 text-sm mb-6">
-              Please enable location in your browser settings and refresh.
+            <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 20 }}>
+              Enable location in browser settings and try again.
             </p>
             <button
               onClick={requestLocation}
-              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-colors"
+              style={{
+                width: '100%', height: 52,
+                background: '#f97316', color: '#fff',
+                border: 'none', borderRadius: 16,
+                fontSize: 15, fontWeight: 800, cursor: 'pointer',
+              }}
             >
               Try Again
             </button>
           </>
         ) : (
           <>
-            <h2 className="text-xl font-black text-neutral-900 mb-2">
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1f2937', marginBottom: 8 }}>
               Where should we deliver?
             </h2>
-            <p className="text-neutral-500 text-sm mb-8">
-              We need your location to show available products and delivery time.
+            <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 24 }}>
+              We need your location to show products and delivery time.
             </p>
 
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={requestLocation}
               disabled={status === 'requesting' || status === 'resolving'}
-              className="w-full h-14 bg-orange-500 hover:bg-orange-600 disabled:opacity-70 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-colors shadow-lg shadow-orange-500/30"
+              style={{
+                width: '100%', height: 56,
+                background: status === 'requesting' || status === 'resolving'
+                  ? '#fdba74' : '#f97316',
+                color: '#fff', border: 'none', borderRadius: 18,
+                fontSize: 15, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                cursor: 'pointer',
+                boxShadow: '0 4px 24px rgba(249,115,22,0.35)',
+              }}
             >
               {status === 'requesting' || status === 'resolving' ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div style={{
+                    width: 20, height: 20,
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                  }} />
                   <span>
                     {status === 'requesting' ? 'Getting location...' : 'Finding store...'}
                   </span>
                 </>
               ) : (
                 <>
-                  <Navigation className="w-5 h-5" />
+                  <Navigation size={20} />
                   <span>Use my current location</span>
                 </>
               )}
             </motion.button>
 
             {status === 'error' && (
-              <p className="mt-4 text-sm text-red-500 font-medium">
+              <p style={{ marginTop: 12, fontSize: 13, color: '#ef4444', fontWeight: 600 }}>
                 Something went wrong. Please try again.
               </p>
             )}
           </>
         )}
       </motion.div>
+
+      {/* Spinner animation */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
