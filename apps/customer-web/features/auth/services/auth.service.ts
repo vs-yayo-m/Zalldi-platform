@@ -1,8 +1,7 @@
 'use client'
 import { createBrowserSupabaseClient } from '@/services/supabase/client.browser'
-
-import { mapAuthError }                from '../utils/authErrors'
-import type { UserProfile }            from '@zalldi/types'
+import { mapAuthError } from '../utils/authErrors'
+import type { UserProfile } from '@zalldi/types'
 
 // ─── Internal ─────────────────────────────────────────────────────────────────
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
@@ -13,8 +12,35 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
     .eq('id', userId)
     .single()
 
-  if (error || !data) return null
+  if (error) {
+    console.error('fetchProfile error:', error.message, error.code)
+    return null
+  }
   return data as UserProfile
+}
+
+async function createProfileIfMissing(
+  userId: string,
+  email: string,
+  displayName: string,
+  provider: 'email' | 'google' = 'email'
+): Promise<UserProfile | null> {
+  const supabase = createBrowserSupabaseClient()
+
+  const { error } = await supabase.from('profiles').insert({
+    id:           userId,
+    email:        email,
+    display_name: displayName,
+    auth_provider: provider,
+    role:         'customer',
+  })
+
+  if (error) {
+    console.error('createProfile error:', error.message)
+    // Profile may already exist — try fetching anyway
+  }
+
+  return fetchProfile(userId)
 }
 
 // ─── Public service ───────────────────────────────────────────────────────────
@@ -26,17 +52,26 @@ const authService = {
       email,
       password,
     })
-    if (error)      throw new Error(mapAuthError(error.message))
+
+    if (error) throw new Error(mapAuthError(error.message))
     if (!data.user) throw new Error('Sign in failed')
 
-    const profile = await fetchProfile(data.user.id)
-    if (!profile) throw new Error('Profile not found. Please contact support.')
+    // Try fetching profile
+    let profile = await fetchProfile(data.user.id)
+
+    // Profile missing — create it on the fly (handles trigger failures)
+    if (!profile) {
+      const displayName = data.user.user_metadata?.full_name ?? email.split('@')[0]
+      profile = await createProfileIfMissing(data.user.id, email, displayName, 'email')
+    }
+
+    if (!profile) throw new Error('Could not load profile. Please try again.')
     return profile
   },
 
   async signUp(
-    email:       string,
-    password:    string,
+    email: string,
+    password: string,
     displayName: string
   ): Promise<void> {
     const supabase = createBrowserSupabaseClient()
@@ -44,18 +79,22 @@ const authService = {
       email,
       password,
       options: {
-        data:             { full_name: displayName },
-        emailRedirectTo:  `${window.location.origin}/auth/callback?next=/home`,
+        data: { full_name: displayName },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`,
       },
     })
-    if (error)      throw new Error(mapAuthError(error.message))
+
+    if (error) throw new Error(mapAuthError(error.message))
     if (!data.user) throw new Error('Registration failed')
 
-    // Update display_name explicitly — trigger may have empty string as fallback
-    await supabase
-      .from('profiles')
-      .update({ display_name: displayName })
-      .eq('id', data.user.id)
+    // Explicitly upsert profile — don't rely solely on trigger
+    await supabase.from('profiles').upsert({
+      id:           data.user.id,
+      email:        email,
+      display_name: displayName,
+      auth_provider: 'email',
+      role:         'customer',
+    }, { onConflict: 'id' })
   },
 
   async signInWithGoogle(): Promise<void> {
@@ -63,12 +102,11 @@ const authService = {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo:  `${window.location.origin}/auth/callback?next=/home`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/home`,
         queryParams: { prompt: 'select_account' },
       },
     })
     if (error) throw new Error(mapAuthError(error.message))
-    // Browser redirects — no return value
   },
 
   async signOut(): Promise<void> {
@@ -97,7 +135,6 @@ const authService = {
     if (error) throw new Error(error.message)
   },
 
-  // B) No password re-entry — just send confirmation to new email
   async initiateEmailChange(newEmail: string): Promise<void> {
     const supabase = createBrowserSupabaseClient()
     const { error } = await supabase.auth.updateUser(
@@ -106,7 +143,6 @@ const authService = {
     )
     if (error) throw new Error(mapAuthError(error.message))
 
-    // Store pending_email so profile UI can show "awaiting confirmation"
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase
@@ -122,8 +158,8 @@ const authService = {
     if (!user?.email) throw new Error('No active session')
 
     const { error } = await supabase.auth.resend({
-      type:    'signup',
-      email:   user.email,
+      type: 'signup',
+      email: user.email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`,
       },
@@ -135,7 +171,16 @@ const authService = {
     const supabase = createBrowserSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
-    return fetchProfile(user.id)
+
+    let profile = await fetchProfile(user.id)
+
+    // Auto-heal missing profile
+    if (!profile && user.email) {
+      const displayName = user.user_metadata?.full_name ?? user.email.split('@')[0]
+      profile = await createProfileIfMissing(user.id, user.email, displayName)
+    }
+
+    return profile
   },
 }
 
