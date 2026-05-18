@@ -1,5 +1,5 @@
-// Server-side only — never import in client components
-import { createClient } from '@/services/supabase/client.server'
+// Server-side only
+import { createServiceRoleClient } from '@/services/supabase/client.server'
 
 export interface CategoryWithProducts {
   id: string
@@ -32,12 +32,11 @@ export interface DarkstoreHomeData {
   deliveryMins: number
 }
 
-// Fetch top-level categories + first 8 products each
-// Uses server-side Supabase client — never exposed to browser
 export async function getDarkstoreHomeData(
   darkstoreId: string
 ): Promise < DarkstoreHomeData > {
-  const supabase = await createClient()
+  // Service role bypasses ALL RLS — safe here because this is server-only
+  const supabase = await createServiceRoleClient()
   
   const { data: cats, error: catError } = await supabase
   .from('categories')
@@ -47,14 +46,13 @@ export async function getDarkstoreHomeData(
   .order('sort_order', { ascending: true })
   .limit(12)
   
-  // Log error so we can see it in Vercel logs
   if (catError) {
-    console.error('CATEGORIES ERROR:', JSON.stringify(catError))
+    console.error('CATEGORIES ERROR:', catError.message)
     return { categories: [], darkstoreOpen: false, opensAt: '06:00', deliveryMins: 20 }
   }
   
   if (!cats || cats.length === 0) {
-    console.error('CATEGORIES EMPTY: no rows returned for darkstore', darkstoreId)
+    console.error('CATEGORIES EMPTY for darkstore:', darkstoreId)
     return { categories: [], darkstoreOpen: false, opensAt: '06:00', deliveryMins: 20 }
   }
   
@@ -84,10 +82,10 @@ export async function getDarkstoreHomeData(
         .limit(8)
       
       if (prodError) {
-        console.error(`PRODUCTS ERROR for category ${cat.name}:`, JSON.stringify(prodError))
+        console.error(`PRODUCTS ERROR ${cat.name}:`, prodError.message)
       }
       
-      console.log(`Category ${cat.name}: ${products?.length ?? 0} products`)
+      console.log(`${cat.name}: ${products?.length ?? 0} products`)
       
       return {
         ...cat,
@@ -106,4 +104,3 @@ export async function getDarkstoreHomeData(
     deliveryMins: store?.avg_delivery_time_mins ?? 20,
   }
 }
-
