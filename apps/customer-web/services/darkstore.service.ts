@@ -39,7 +39,6 @@ export async function getDarkstoreHomeData(
 ): Promise < DarkstoreHomeData > {
   const supabase = await createClient()
   
-  // 1. Get top-level categories (parent_id IS NULL)
   const { data: cats, error: catError } = await supabase
   .from('categories')
   .select('id, name, slug, image_url, sort_order')
@@ -48,24 +47,28 @@ export async function getDarkstoreHomeData(
   .order('sort_order', { ascending: true })
   .limit(12)
   
-  if (catError || !cats) return {
-    categories: [],
-    darkstoreOpen: false,
-    opensAt: '06:00',
-    deliveryMins: 20,
+  // Log error so we can see it in Vercel logs
+  if (catError) {
+    console.error('CATEGORIES ERROR:', JSON.stringify(catError))
+    return { categories: [], darkstoreOpen: false, opensAt: '06:00', deliveryMins: 20 }
   }
   
-  // 2. Get darkstore open status
+  if (!cats || cats.length === 0) {
+    console.error('CATEGORIES EMPTY: no rows returned for darkstore', darkstoreId)
+    return { categories: [], darkstoreOpen: false, opensAt: '06:00', deliveryMins: 20 }
+  }
+  
+  console.log('CATEGORIES FOUND:', cats.length)
+  
   const { data: store } = await supabase
   .from('darkstores')
   .select('is_open, opens_at, avg_delivery_time_mins')
   .eq('id', darkstoreId)
   .single()
   
-  // 3. For each category fetch first 8 products in parallel
   const categoriesWithProducts = await Promise.all(
     cats.map(async (cat) => {
-      const { data: products } = await supabase
+      const { data: products, error: prodError } = await supabase
         .from('products')
         .select(`
           id, name, slug, price, mrp, discount_percentage,
@@ -80,6 +83,12 @@ export async function getDarkstoreHomeData(
         .order('created_at', { ascending: false })
         .limit(8)
       
+      if (prodError) {
+        console.error(`PRODUCTS ERROR for category ${cat.name}:`, JSON.stringify(prodError))
+      }
+      
+      console.log(`Category ${cat.name}: ${products?.length ?? 0} products`)
+      
       return {
         ...cat,
         products: (products ?? []) as Product[],
@@ -87,8 +96,8 @@ export async function getDarkstoreHomeData(
     })
   )
   
-  // Filter out empty categories
   const nonEmpty = categoriesWithProducts.filter(c => c.products.length > 0)
+  console.log('NON-EMPTY CATEGORIES:', nonEmpty.length)
   
   return {
     categories: nonEmpty,
