@@ -1,20 +1,10 @@
 'use client'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { MapPin, Navigation, AlertCircle } from 'lucide-react'
 import { useNearestDarkstore } from '../hooks/useNearestDarkstore'
 
 export function LocationGate({ children }: { children: React.ReactNode }) {
   const { status, requestLocation, hasLocation } = useNearestDarkstore()
-  const router = useRouter()
-  
-  // After location granted → refresh Server Component to pick up cookie
-  useEffect(() => {
-    if (status === 'success') {
-      router.refresh()
-    }
-  }, [status, router])
   
   if (hasLocation) return <>{children}</>
   
@@ -131,7 +121,6 @@ export function LocationGate({ children }: { children: React.ReactNode }) {
         )}
       </motion.div>
 
-      {/* Spinner animation */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
